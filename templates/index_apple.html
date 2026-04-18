@@ -378,7 +378,7 @@
             }
         }
 
-        /* iPad Specific */
+        /* iPad Safe Area */
         @supports (padding: max(0px)) {
             body {
                 padding-left: max(12px, env(safe-area-inset-left));
@@ -492,7 +492,6 @@
             canvas.height = rect.height;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.lineWidth = 2;
             ctx.strokeStyle = '#000';
         }
 
@@ -523,15 +522,15 @@
             try {
                 const response = await fetch(`/api/users/${encodeURIComponent(userName)}`);
                 const data = await response.json();
-                
+
                 state.currentUser = userName;
                 state.currentSyllableIndex = data.progress?.resume_index || 1;
-                
+
                 document.querySelectorAll('.user-list li').forEach(li => {
                     li.classList.remove('active');
                 });
                 document.querySelector(`.user-list li[data-user="${userName}"]`).classList.add('active');
-                
+
                 document.getElementById('userInfo').textContent = `Current User: ${userName}`;
                 updateProgress(data.progress);
                 updateDisplay();
@@ -608,12 +607,13 @@
 
                 const shouldMoveNext = isThirdSaveForCurrentSyllable(data.filename);
                 showStatus(
-                    shouldMoveNext ? `Saved: ${data.filename}. Moving to next word.` : `Saved: ${data.filename}`,
+                    shouldMoveNext
+                        ? `Saved: ${data.filename}. Moving to next word.`
+                        : `Saved: ${data.filename}`,
                     'success'
                 );
                 clearCanvas();
-                
-                // Update progress
+
                 const progressResponse = await fetch('/api/get-user-progress');
                 const progressData = await progressResponse.json();
                 updateProgress(progressData);
@@ -628,10 +628,7 @@
 
         function isThirdSaveForCurrentSyllable(filename) {
             const match = String(filename || '').match(/^(\d+)-(\d+)\.txt$/);
-            if (!match) {
-                return false;
-            }
-
+            if (!match) return false;
             const syllableIndex = parseInt(match[1], 10);
             const saveNumber = parseInt(match[2], 10);
             return syllableIndex === state.currentSyllableIndex && saveNumber >= 3;
@@ -641,7 +638,6 @@
         function updateUserList(users) {
             const userList = document.getElementById('userList');
             userList.innerHTML = '';
-            
             users.forEach(user => {
                 const li = document.createElement('li');
                 li.setAttribute('data-user', user.name);
@@ -654,7 +650,7 @@
         function updateProgress(progress) {
             const percent = progress.percentage || 0;
             document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('progressText').textContent = 
+            document.getElementById('progressText').textContent =
                 `${progress.completed}/${progress.total} (${percent.toFixed(1)}%)`;
         }
 
@@ -664,16 +660,14 @@
                 return;
             }
 
-            if (state.currentSyllableIndex < 1) {
-                state.currentSyllableIndex = 1;
-            }
+            if (state.currentSyllableIndex < 1) state.currentSyllableIndex = 1;
             if (state.currentSyllableIndex > state.syllables.length) {
                 state.currentSyllableIndex = state.syllables.length;
             }
 
             const syllable = state.syllables[state.currentSyllableIndex - 1];
             document.getElementById('jumpInput').value = state.currentSyllableIndex;
-            document.getElementById('syllableDisplay').textContent = 
+            document.getElementById('syllableDisplay').textContent =
                 `${state.currentSyllableIndex}: ${syllable}`;
         }
 
@@ -698,29 +692,23 @@
                 showStatus('No syllables loaded', 'error');
                 return;
             }
-
             const input = document.getElementById('jumpInput');
             const targetIndex = parseInt(input.value, 10);
-
             if (Number.isNaN(targetIndex)) {
                 showStatus('Enter a valid number', 'error');
                 return;
             }
-
             if (targetIndex < 1 || targetIndex > state.syllables.length) {
                 showStatus(`Enter a number between 1 and ${state.syllables.length}`, 'error');
                 return;
             }
-
             state.currentSyllableIndex = targetIndex;
             updateDisplay();
             clearCanvas();
         }
 
         function handleJumpKey(event) {
-            if (event.key === 'Enter') {
-                jumpToSyllable();
-            }
+            if (event.key === 'Enter') jumpToSyllable();
         }
 
         function showStatus(message, type) {
@@ -746,12 +734,13 @@
         }
 
         // ==================== CANVAS DRAWING ====================
+        // Apple Pencil reports as pointerType 'pen' — accept pen and mouse
+        // Mouse support included as fallback for testing on laptop directly
         canvas.addEventListener('pointerdown', startDrawing, { passive: false });
         canvas.addEventListener('pointermove', draw, { passive: false });
         canvas.addEventListener('pointerup', stopDrawing, { passive: false });
         canvas.addEventListener('pointercancel', stopDrawing, { passive: false });
-        
-        // Prevent scrolling and context menu on canvas
+
         canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
         canvas.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
         document.addEventListener('touchmove', (e) => {
@@ -760,30 +749,28 @@
             }
         }, { passive: false });
 
-        
-        function isValidStylus(e) {
-            // Case 1: Proper stylus detection
-            if (e.pointerType === 'pen') {
-                return true;
+        function isValidInput(e) {
+            // Apple Pencil: pointerType === 'pen'
+            if (e.pointerType === 'pen') return true;
+            // Mouse fallback (for testing on laptop)
+            if (e.pointerType === 'mouse') return true;
+            // Android stylus fallback: touch with very small contact area
+            if (e.pointerType === 'touch' && e.width && e.height) {
+                return e.width < 10 && e.height < 10;
             }
-
-            // Case 2: Android fallback (stylus reported as touch)
-            if (e.pointerType === 'touch') {
-                // Stylus tip is very small, finger/palm is large
-                if (e.width && e.height) {
-                    return e.width < 10 && e.height < 10;
-                }
-            }
-
             return false;
         }
 
+        function getLineWidth(e) {
+            // Apple Pencil pressure-sensitive line width
+            if (e.pointerType === 'pen' && e.pressure > 0) {
+                return Math.max(1, e.pressure * 4);
+            }
+            return 2;
+        }
 
         function startDrawing(e) {
-            if (!isValidStylus(e)) {
-                return;
-            }
-
+            if (!isValidInput(e)) return;
             e.preventDefault();
             state.isDrawing = true;
             state.currentStroke = [];
@@ -799,11 +786,7 @@
 
         function draw(e) {
             if (!state.isDrawing) return;
-
-            if (!isValidStylus(e)) {
-                return;
-            }
-
+            if (!isValidInput(e)) return;
             e.preventDefault();
 
             const rect = canvas.getBoundingClientRect();
@@ -811,14 +794,15 @@
             const y = e.clientY - rect.top;
 
             state.currentStroke.push({ x, y, t: Date.now() / 1000 });
+            ctx.lineWidth = getLineWidth(e);
             ctx.lineTo(x, y);
             ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
         }
-
 
         function stopDrawing(e) {
             if (!state.isDrawing) return;
-
             e.preventDefault();
             state.isDrawing = false;
             ctx.closePath();
@@ -826,7 +810,6 @@
             if (state.currentStroke.length > 1) {
                 state.strokes.push(state.currentStroke);
             }
-
             state.currentStroke = [];
         }
 
@@ -838,10 +821,10 @@
 
         function redrawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             for (const stroke of state.strokes) {
                 for (let i = 1; i < stroke.length; i++) {
                     ctx.beginPath();
+                    ctx.lineWidth = 2;
                     ctx.moveTo(stroke[i - 1].x, stroke[i - 1].y);
                     ctx.lineTo(stroke[i].x, stroke[i].y);
                     ctx.stroke();

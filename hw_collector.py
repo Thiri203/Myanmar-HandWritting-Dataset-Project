@@ -294,6 +294,8 @@ class MainWindow(QWidget):
         self.update_progress()
 
         QMessageBox.information(self, "Saved", f"{fname}")
+        if i >= 3:
+            self.next_line()
 
 
 # -------------------------

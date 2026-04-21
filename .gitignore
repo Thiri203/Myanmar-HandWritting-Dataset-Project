@@ -23,6 +23,9 @@ instance/
 # Dataset (VERY IMPORTANT)
 # =========================
 dataset/
+single/
+stroke/
+time/
 *.txt
 *.zip
 
@@ -35,6 +38,7 @@ dataset/
 # =========================
 checkpoints/
 *.pth
+experiment_logs/
 
 # =========================
 # PyQt / GUI temp

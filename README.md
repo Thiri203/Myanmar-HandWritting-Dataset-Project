@@ -30,7 +30,7 @@ This work was prepared as part of **Assignment 3** for **Sir. Ye Kyaw Thu's AIE 
 
 Dataset download link:
 
-`[https://1drv.ms/f/c/d705d75cc7a637c7/IgD9QEaTkD0ORIUzAzTorRgIAcIrmQ8O8Uhd0PUQI899vbcAdd your OneDrive dataset link here]`
+`[https://1drv.ms/f/c/d705d75cc7a637c7/IgD9QEaTkD0ORIUzAzTorRgIAcIrmQ8O8Uhd0PUQI899vbc]`
 
 You can replace the placeholder above with your public or shared OneDrive link when you are ready.
 

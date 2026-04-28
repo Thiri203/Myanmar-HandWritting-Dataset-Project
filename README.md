@@ -14,6 +14,8 @@ This project provides:
 - Progress tracking for dataset collection
 - Utilities to browse saved stroke data
 - A conversion script to transform stroke files into image files
+- CNN training notebooks for comparing single, stroke, and time image datasets
+- Experiment logs and a report summarizing model behavior across different class counts
 
 The repository currently uses a syllable list from `syl.txt` and stores handwritten samples as stroke coordinates inside the `dataset/` directory.
 
@@ -238,14 +240,81 @@ Myanmar handwriting resources are relatively limited compared with datasets avai
 - create image-based training data from the same raw files, and
 - encourage practical dataset-building work in an academic setting.
 
-## Future Improvements
+## CNN Training Experiments
 
-- Add export tools for CSV or JSON summaries
-- Support direct cloud backup for collected samples
-- Add better writer statistics and quality checks
-- Improve mobile responsiveness further
-- Extend metadata collection for research use
-- Add train, validation, and test split generation scripts
+After collecting and converting the handwriting samples, I trained a simple CNN model on three dataset versions:
+
+- `single`: normal handwriting image representation
+- `stroke`: stroke-based converted image representation
+- `time`: time-based converted image representation
+
+For each dataset type, I trained with 20, 50, 100, and 200 classes. The goal was to observe how training changes when the dataset representation changes and when the number of classes increases. The training notebooks are:
+
+- `single_train.ipynb`
+- `stroke_train.ipynb`
+- `time_train.ipynb`
+
+The experiment logs are stored in `experiment_logs/`, and the written summary is available in `Report.md` and `Report.pdf`.
+
+### Training setup
+
+- Model: simple CNN
+- Input image size: 64 x 64 grayscale
+- Batch size: 64
+- Learning rate: 0.001
+- Maximum epochs: 10
+- Early stopping patience: 3
+- Validation split: 1 sample per class
+
+Because the validation set has only one sample per class, the validation accuracy is sensitive. For example, in a 20-class run, one correct validation prediction already gives 5% accuracy.
+
+### Result summary
+
+| Dataset | Classes | Chance Acc | Best Val Acc | Result |
+|---|---:|---:|---:|---|
+| single | 20 | 0.0500 | 0.0500 | Chance level |
+| single | 50 | 0.0200 | 0.3600 | Meaningful learning |
+| single | 100 | 0.0100 | 0.0100 | Chance level |
+| single | 200 | 0.0050 | 0.0050 | Chance level |
+| stroke | 20 | 0.0500 | 0.0500 | Chance level |
+| stroke | 50 | 0.0200 | 0.0200 | Chance level |
+| stroke | 100 | 0.0100 | 0.0200 | Slightly above chance |
+| stroke | 200 | 0.0050 | 0.0050 | Chance level |
+| time | 20 | 0.0500 | 0.0500 | Chance level |
+| time | 50 | 0.0200 | 0.0200 | Chance level |
+| time | 100 | 0.0100 | 0.0100 | Chance level |
+| time | 200 | 0.0050 | 0.0050 | Chance level |
+
+### What we found
+
+The `single` dataset trained the best. The strongest result was the 50-class single dataset run, where validation accuracy reached 0.36 compared with 0.02 chance accuracy. This shows that the CNN learned useful visual features from the normal handwriting image representation.
+
+The `stroke` dataset was harder. Most runs stayed at chance level, but the 100-class run reached 0.02 accuracy compared with 0.01 chance accuracy. This is slightly above chance, but still too weak to be considered a strong model.
+
+The `time` dataset was the hardest for this CNN setup. All time dataset runs stayed at chance level. This suggests that time-based writing information may not be represented well when it is treated only as a static image.
+
+Across all datasets, increasing the class count made training much harder. The 200-class experiments stayed at chance level for single, stroke, and time datasets. The current model and amount of data are not enough for reliable large-class Myanmar syllable recognition.
+
+The main conclusion is that the current CNN is a useful baseline, but it is not strong enough for larger class counts or for stroke/time representations. Future improvements should include more samples per class, stronger augmentation, model tuning, and possibly sequence-based models for stroke and time data.
+
+## Main Dataset Limits
+
+Only one main writer folder is currently used.
+Each class has very few samples, usually around 3 to 5.
+Validation accuracy is unstable because one class has only one validation image.
+Myanmar syllables have many visually similar classes.
+Stroke and time data may need sequence models, not just image CNNs.
+4,413 total possible syllables is large, but the collected sample count per syllable is too small for strong large-class training.
+
+## Future Training Direction I could Do More
+
+Collect more writers and more samples per syllable.
+Use data augmentation: rotation, shift, scale, thickness changes.
+Use transfer learning or stronger CNNs.
+Try sequence models for raw stroke data:
+RNN/LSTM/GRU
+Transformer
+1D CNN over stroke coordinates
 
 ## Acknowledgment
 

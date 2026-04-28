@@ -59,5 +59,24 @@ The results also show that the representation of the handwriting matters. A norm
 
 From these experiments, the CNN learns best on the single dataset and struggles on the stroke and time datasets. The best result is from the single dataset with 50 classes, where validation accuracy reached 0.36 compared with 0.02 chance accuracy. This shows real learning. However, most other runs stayed at chance level, especially when the class count increased to 100 or 200.
 
-My conclusion is that the current training setup is only a starting baseline. It can learn some useful features from the single dataset, but it is not strong enough for larger class counts or for stroke/time representations. To improve the project, I should collect more samples per class, use stronger augmentation, tune the CNN architecture, and consider sequence-based models for stroke and time data.
+My conclusion is that the current training setup is only a starting baseline. It can learn some useful features from the single dataset, but it is not strong enough for larger class counts or for stroke/time representations. To improve the project, I should collect more samples per class (which we can combine our classmate dataset), use stronger augmentation, tune the CNN architecture, and consider sequence-based models for stroke and time data.
+
+## Main Dataset Limits
+
+Only one main writer folder is currently used.
+Each class has very few samples, usually around 3 to 5.
+Validation accuracy is unstable because one class has only one validation image.
+Myanmar syllables have many visually similar classes.
+Stroke and time data may need sequence models, not just image CNNs.
+4,413 total possible syllables is large, but the collected sample count per syllable is too small for strong large-class training.
+
+## Future Training Direction I could Do More
+
+Collect more writers and more samples per syllable.
+Use data augmentation: rotation, shift, scale, thickness changes.
+Use transfer learning or stronger CNNs.
+Try sequence models for raw stroke data:
+RNN/LSTM/GRU
+Transformer
+1D CNN over stroke coordinates
 

@@ -26,19 +26,23 @@ dataset/
 single/
 stroke/
 time/
-*.txt
 *.zip
 
-# (optional: if you want to keep syl.txt tracked, comment the above line and use:)
-#  dataset/
-#  !syl.txt
+# Keep the Myanmar syllable list tracked because the app, notebooks, and reports use it.
+!syl.txt
 
 # =========================
 # Model checkpoints
 # =========================
 checkpoints/
 *.pth
-experiment_logs/
+
+# =========================
+# Experiment results
+# =========================
+# Keep CSV experiment logs tracked; they are small and explain the training results.
+!experiment_logs/
+!experiment_logs/*.csv
 
 # =========================
 # PyQt / GUI temp
